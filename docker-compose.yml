@@ -1,0 +1,141 @@
+networks:
+  corp_net:
+      ipam:
+        config:
+          - subnet: 10.10.0.0/24
+
+  outside_net:
+      ipam:
+        config:
+          - subnet: 10.20.0.0/24
+
+services:
+  gateway:
+    build: ./gateway
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    networks:
+      corp_net:
+        ipv4_address: 10.10.0.2
+      outside_net:
+        ipv4_address: 10.20.0.2
+    volumes:
+      - ./gateway:/etc/lab
+  alice:
+    build: ./employee
+    hostname: alice
+    depends_on: [gateway]
+    cap_add: [NET_ADMIN]
+    networks:
+      corp_net: 
+        ipv4_address: 10.10.0.11
+    volumes:
+      - ./tests:/tests:ro
+      - ./certs/internet-ca.crt:/usr/local/share/ca-certificates/internet-ca.crt:ro
+      - ./certs/company-ca.crt:/usr/local/share/ca-certificates/company-ca.crt:ro
+      - ./results:/results
+    environment:
+      http_proxy: http://10.10.0.2:8080
+      https_proxy: http://10.10.0.2:8080
+      no_proxy: .corp
+      COMPANY_TOKEN: ${COMPANY_TOKEN}
+
+  fileshare:
+    build: ./webapp
+    hostname: fileshare
+    depends_on: [gateway]
+    cap_add: [NET_ADMIN]
+    environment:
+      SERVICE_NAME: fileshare.ext
+      RETURN_VIA: 10.20.0.2
+      TLS_CERT: /certs/fileshare.crt
+      TLS_KEY: /certs/fileshare.key
+    networks:
+      outside_net:
+        ipv4_address: 10.20.0.10
+    volumes:
+      - ./certs:/certs:ro
+  
+  wiki:
+    build: ./webapp
+    hostname: wiki
+    environment:
+      SERVICE_NAME: wiki.corp
+    networks:
+      corp_net:
+        ipv4_address: 10.10.0.20
+
+  proxy:
+    build: ./proxy
+    network_mode: "service:gateway"
+    depends_on: [gateway]
+    volumes:
+      - ./certs:/certs:ro
+      - ./proxy/addons:/addons:ro
+      - logs:/logs
+    environment:
+      DLP_TOKEN_SECRET: ${DLP_TOKEN_SECRET}
+    restart: unless-stopped
+
+  cloud:
+    build: ./webapp
+    hostname: cloud
+    depends_on: [gateway]
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: cloud.ext
+      TLS_CERT: /certs/cloud.ext.crt
+      TLS_KEY: /certs/cloud.ext.key
+    networks:
+      outside_net:
+        ipv4_address: 10.20.0.11
+    volumes:
+      - ./certs:/certs:ro
+  
+  mail:
+    build: ./mail
+    hostname: mail
+    restart: unless-stopped
+    volumes:
+      - logs:/logs
+    networks:
+      corp_net:
+        ipv4_address: 10.10.0.25
+  
+  gmail:
+    build: ./mail
+    hostname: gmail
+    restart: unless-stopped
+    command: sh -c "python -m aiosmtpd -n -l 0.0.0.0:25 & python -m aiosmtpd -n -l 0.0.0.0:443 & exec python -m aiosmtpd -n -l 0.0.0.0:587"
+    networks:
+      outside_net:
+        ipv4_address: 10.20.0.12
+  
+  webmail:
+    build: ./webapp
+    hostname: webmail
+    depends_on: [gateway]
+    restart: unless-stopped
+    environment:
+      SERVICE_NAME: webmail.ext
+      TLS_CERT: /certs/webmail.ext.crt
+      TLS_KEY: /certs/webmail.ext.key
+    networks:
+      outside_net:
+        ipv4_address: 10.20.0.13
+    volumes:
+      - ./certs:/certs:ro
+  dashboard:
+    build: ./dashboard
+    hostname: dashboard
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:80"
+    networks:
+      corp_net:
+        ipv4_address: 10.10.0.30
+    volumes:
+      - logs:/logs:ro
+volumes:
+  logs:

@@ -1,0 +1,59 @@
+DLP Gateway Lab - test run 2026-11-20 18:26:41 UTC
+
+########## phase1
+== DNS
+PASS  wiki.corp resolves (ok)
+PASS  google.com does not resolve (blocked)
+== Internal traffic
+PASS  wiki.corp homepage (ok)
+PASS  photo upload to wiki.corp (ok)
+== Direct routes to the outside (must be blocked)
+PASS  direct HTTP to fileshare.ext (blocked)
+PASS  direct photo upload to fileshare.ext (blocked)
+PASS  SMTP to the outside (blocked)
+== Through the proxy (DLP)
+PASS  web page via proxy (ok)
+FAIL  photo upload via proxy (expected blocked, got ok)
+PASS  text upload via proxy (ok)
+
+Result: 9 passed, 1 failed
+
+########## email
+== Company mail server (mail.corp)
+PASS  company -> company (ok)
+PASS  company -> external recipient (blocked)
+PASS  envelope spoofing (send as bob) (blocked)
+PASS  header spoofing (From: bob) (blocked)
+PASS  no login (blocked)
+PASS  wrong password (blocked)
+== Personal mail provider (smtp.gmail.ext)
+PASS  direct SMTP, port 587 (blocked)
+PASS  direct SMTP, port 25 (blocked)
+PASS  tunnel through proxy, port 25 (blocked)
+PASS  tunnel through proxy, port 443 (blocked)
+== Webmail (webmail.ext)
+PASS  company account login (ok)
+FAIL  personal account login (expected blocked, got ok)
+
+Result: 11 passed, 1 failed
+
+########## attacks
+== Attacks (all should be BLOCKED)
+1 renamed .txt               ALLOWED  (HTTP 201)
+2 base64 in form field       ALLOWED  (HTTP 201)
+3 base64 in JSON             ALLOWED  (HTTP 201)
+4 5 bytes in front           ALLOWED  (HTTP 201)
+5 gzip file                  ALLOWED  (HTTP 201)
+6 piece piece_aa (5000B)     ALLOWED  (HTTP 201)
+6 piece piece_ab (5000B)     ALLOWED  (HTTP 201)
+6 piece piece_ac (5000B)     ALLOWED  (HTTP 201)
+6 piece piece_ad (5000B)     ALLOWED  (HTTP 201)
+6 piece piece_ae (4B)        ALLOWED  (HTTP 201)
+7 HTTP gzip encoding         ALLOWED  (HTTP 201)
+
+== Extra: 900-byte pieces
+900-byte pieces: 0 blocked, 23 allowed
+
+== Normal traffic (should be ALLOWED)
+text file upload             ALLOWED  (HTTP 201)
+JSON search                  ALLOWED  (HTTP 201)

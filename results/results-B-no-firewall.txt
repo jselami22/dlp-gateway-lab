@@ -1,0 +1,59 @@
+DLP Gateway Lab - test run 2026-11-20 18:25:00 UTC
+
+########## phase1
+== DNS
+PASS  wiki.corp resolves (ok)
+PASS  google.com does not resolve (blocked)
+== Internal traffic
+PASS  wiki.corp homepage (ok)
+PASS  photo upload to wiki.corp (ok)
+== Direct routes to the outside (must be blocked)
+FAIL  direct HTTP to fileshare.ext (expected blocked, got ok)
+FAIL  direct photo upload to fileshare.ext (expected blocked, got ok)
+FAIL  SMTP to the outside (expected blocked, got ok)
+== Through the proxy (DLP)
+PASS  web page via proxy (ok)
+PASS  photo upload via proxy (blocked)
+PASS  text upload via proxy (ok)
+
+Result: 7 passed, 3 failed
+
+########## email
+== Company mail server (mail.corp)
+PASS  company -> company (ok)
+PASS  company -> external recipient (blocked)
+PASS  envelope spoofing (send as bob) (blocked)
+PASS  header spoofing (From: bob) (blocked)
+PASS  no login (blocked)
+PASS  wrong password (blocked)
+== Personal mail provider (smtp.gmail.ext)
+FAIL  direct SMTP, port 587 (expected blocked, got ok)
+FAIL  direct SMTP, port 25 (expected blocked, got ok)
+PASS  tunnel through proxy, port 25 (blocked)
+PASS  tunnel through proxy, port 443 (blocked)
+== Webmail (webmail.ext)
+PASS  company account login (ok)
+PASS  personal account login (blocked)
+
+Result: 10 passed, 2 failed
+
+########## attacks
+== Attacks (all should be BLOCKED)
+1 renamed .txt               BLOCKED  Blocked by DLP policy: JPEG image in field 'file' (filename 'quarterly
+2 base64 in form field       BLOCKED  Blocked by DLP policy: base64-encoded JPEG image in field 'data' (file
+3 base64 in JSON             BLOCKED  Blocked by DLP policy: base64-encoded JPEG image in request body
+4 5 bytes in front           BLOCKED  Blocked by DLP policy: unidentified high-entropy data (7.99 bits/byte)
+5 gzip file                  BLOCKED  Blocked by DLP policy: GZIP archive in field 'file' (filename 'photo.g
+6 piece piece_aa (5000B)     BLOCKED  Blocked by DLP policy: JPEG image in field 'file' (filename 'piece_aa'
+6 piece piece_ab (5000B)     BLOCKED  Blocked by DLP policy: unidentified high-entropy data (7.97 bits/byte)
+6 piece piece_ac (5000B)     BLOCKED  Blocked by DLP policy: unidentified high-entropy data (7.96 bits/byte)
+6 piece piece_ad (5000B)     BLOCKED  Blocked by DLP policy: unidentified high-entropy data (7.96 bits/byte)
+6 piece piece_ae (4B)        ALLOWED  (HTTP 201)
+7 HTTP gzip encoding         BLOCKED  Blocked by DLP policy: JPEG image in request body
+
+== Extra: 900-byte pieces
+900-byte pieces: 1 blocked, 22 allowed
+
+== Normal traffic (should be ALLOWED)
+text file upload             ALLOWED  (HTTP 201)
+JSON search                  ALLOWED  (HTTP 201)

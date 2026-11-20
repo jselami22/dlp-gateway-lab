@@ -1,0 +1,14 @@
+# DLP policy
+# Files may be uploaded to these destinations (the name, or any subdomain of it).
+approved_destinations: 
+  - cloud.ext
+# Uploads to approved destinations need an account of this domain
+company_domain: corp.local
+# The proxy only opens CONNECT tunnels to these ports
+tunnel_ports:
+  - 443
+# Webmail services: only company accounts may log in
+webmail_services:
+  - webmail.ext
+# false = monitor mode (log only, block nothing)
+enforce: true

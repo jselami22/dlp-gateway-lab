@@ -1,0 +1,13 @@
+# Generated certificates and private keys (re-create them with the scripts in certs/)
+certs/*.key
+certs/*.pem
+certs/*.crt
+certs/*.csr
+certs/*.srl
+certs/*.cnf
+
+# Local secrets
+.env
+
+# Python cache
+__pycache__/
