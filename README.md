@@ -7,7 +7,7 @@ DLP engine, a company-only mail server, and a live dashboard of every decision.
 All 32 functional tests pass, and 10 of 11 red-team upload attacks
 (renamed files, base64, gzip, split files, ...) are blocked.
 
-I put togather a report with a more detailed explanation of the architecture, set up, tests, results, and other findings. If you are interested in this project [report](report.md)
+I put together a report with a more detailed explanation of the architecture, set up, tests, results, and other findings. If you are interested in this project [report](report.md)
 
 ## Architecture
 
